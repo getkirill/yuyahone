@@ -1,16 +1,20 @@
 import java.util.*
 
-val transactions = mutableListOf<Transaction>()
+class Economy {
+    val transactions = mutableListOf<Transaction>()
+    val stockTransactions = mutableListOf<StockTransaction>()
+    val stockMarket = StockMarket()
+}
 
 data class Transaction(val from: UUID, val to: UUID, val amount: Double)
 
-class Account(val uuid: UUID) {
+class Account(val uuid: UUID, val economy: Economy) {
     val balance: Double
-        get() = transactions.filter { it.from == uuid || it.to == uuid }
+        get() = economy.transactions.filter { it.from == uuid || it.to == uuid }
             .sumOf { if (it.from == uuid) -it.amount else it.amount }
     val stocks: List<Stock>
         get() {
-            val myStockTransacts = stockTransactions.filter { it.from == uuid || it.to == uuid }
+            val myStockTransacts = economy.stockTransactions.filter { it.from == uuid || it.to == uuid }
             val myStocks = mutableMapOf<String, Long>()
             myStockTransacts.forEach {
                 if (myStocks[it.stock.index] == null) {
@@ -23,10 +27,10 @@ class Account(val uuid: UUID) {
                     myStocks[it.stock.index] = myStocks[it.stock.index]!! + it.stock.amount
                 }
             }
-            return myStocks.map { Stock(it.key, it.value) }.filter{it.amount > 0}
+            return myStocks.map { Stock(it.key, it.value) }.filter { it.amount > 0 }
         }
 
-    fun stockBalance(stock: String) = stocks.firstOrNull {it.index == stock} ?: Stock(stock, 0)
+    fun stockBalance(stock: String) = stocks.firstOrNull { it.index == stock } ?: Stock(stock, 0)
 
     fun send(to: UUID, amount: Double) {
         if (amount <= 0) {
@@ -38,7 +42,7 @@ class Account(val uuid: UUID) {
         if (uuid == to) {
             throw Exception("Receiver can't be sender you asshole")
         }
-        transactions.add(Transaction(uuid, to, amount))
+        economy.transactions.add(Transaction(uuid, to, amount))
     }
 
     fun send(to: UUID, stock: Stock) {
@@ -51,30 +55,30 @@ class Account(val uuid: UUID) {
         if (uuid == to) {
             throw Exception("Receiver can't be sender you asshole")
         }
-        stockTransactions.add(StockTransaction(uuid, to, stock))
+        economy.stockTransactions.add(StockTransaction(uuid, to, stock))
     }
 
     fun deposit(amount: Double) {
-        transactions.add(Transaction(UUID(0, 0), uuid, amount))
+        economy.transactions.add(Transaction(UUID(0, 0), uuid, amount))
     }
 
     fun deposit(stock: Stock) {
-        stockTransactions.add(StockTransaction(UUID(0, 0), uuid, stock))
+        economy.stockTransactions.add(StockTransaction(UUID(0, 0), uuid, stock))
     }
 
     fun withdraw(amount: Double) {
-        transactions.add(Transaction(uuid, UUID(0, 0), amount))
+        economy.transactions.add(Transaction(uuid, UUID(0, 0), amount))
     }
 
     fun withdraw(stock: Stock) {
-        stockTransactions.add(StockTransaction(uuid, UUID(0, 0), stock))
+        economy.stockTransactions.add(StockTransaction(uuid, UUID(0, 0), stock))
     }
 
     fun buy(stock: Stock, price: Double) {
-        stockMarket.activeOrders.add(StockOrder(StockOrder.Operation.BUY, stock, price, uuid))
+        economy.stockMarket.activeOrders.add(StockOrder(StockOrder.Operation.BUY, stock, price, this))
     }
 
     fun sell(stock: Stock, price: Double) {
-        stockMarket.activeOrders.add(StockOrder(StockOrder.Operation.SELL, stock, price, uuid))
+        economy.stockMarket.activeOrders.add(StockOrder(StockOrder.Operation.SELL, stock, price, this))
     }
 }

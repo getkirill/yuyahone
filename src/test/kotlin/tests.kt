@@ -1,13 +1,19 @@
+import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertDoesNotThrow
 import java.util.*
 import kotlin.test.assertEquals
 
 internal class Tests {
+    var economy = Economy()
+    @BeforeEach
+    fun newEconomy() {
+        economy = Economy()
+    }
     @Test
     fun testSimpleTransaction() {
-        val account1 = Account(UUID.randomUUID())
-        val account2 = Account(UUID.randomUUID())
+        val account1 = Account(UUID.randomUUID(), economy)
+        val account2 = Account(UUID.randomUUID(), economy)
 
         account1.deposit(5.0)
         account1.send(account2.uuid, 4.0)
@@ -18,8 +24,8 @@ internal class Tests {
 
     @Test
     fun testStockTransaction() {
-        val account1 = Account(UUID.randomUUID())
-        val account2 = Account(UUID.randomUUID())
+        val account1 = Account(UUID.randomUUID(), economy)
+        val account2 = Account(UUID.randomUUID(), economy)
 
         account1.deposit(Stock("A", 5))
         account1.send(account2.uuid, Stock("A", 4))
@@ -30,19 +36,19 @@ internal class Tests {
 
     @Test
     fun testStockMarket() {
-        val account1 = Account(UUID.randomUUID())
-        val account2 = Account(UUID.randomUUID())
+        val account1 = Account(UUID.randomUUID(), economy)
+        val account2 = Account(UUID.randomUUID(), economy)
 
         account1.deposit(360.0)
         account2.deposit(Stock("SANE", 100))
         account2.sell(Stock("SANE", 100), 345.0)
         assertDoesNotThrow {
-            stockMarket.activeOrders.first()
+            economy.stockMarket.activeOrders.first()
         }
         account1.buy(Stock("SANE", 100), 360.0)
-        assert(stockMarket.activeOrders.size == 2)
-        stockMarket.matchOrders()
-        assert(stockMarket.activeOrders.size == 0)
+        assert(economy.stockMarket.activeOrders.size == 2)
+        economy.stockMarket.matchOrders()
+        assert(economy.stockMarket.activeOrders.size == 0)
         assert(account1.stockBalance("SANE").amount == 100L)
         assert(account2.stockBalance("SANE").amount == 0L)
         assert(account2.balance == 360.0)
@@ -51,9 +57,9 @@ internal class Tests {
 
     @Test
     fun testStockMarketMultipleOrders() {
-        val account1 = Account(UUID.randomUUID())
-        val account2 = Account(UUID.randomUUID())
-        val account3 = Account(UUID.randomUUID())
+        val account1 = Account(UUID.randomUUID(), economy)
+        val account2 = Account(UUID.randomUUID(), economy)
+        val account3 = Account(UUID.randomUUID(), economy)
 
         // Account 1 is buyer, account 2/3 are sellers
 
@@ -65,9 +71,9 @@ internal class Tests {
         account2.sell(Stock("A", 10), 100.0)
         account3.sell(Stock("A", 10), 50.0)
 
-        println("${stockMarket.averagePrice("A")}, ${stockMarket.lowestPrice("A")}")
+        println("${economy.stockMarket.averagePrice("A")}, ${economy.stockMarket.lowestPrice("A")}")
 
-        stockMarket.matchOrders()
+        economy.stockMarket.matchOrders()
 
         assertEquals(account1.stockBalance("A").amount, 10)
         assertEquals(account2.stockBalance("A").amount, 10)

@@ -1,6 +1,5 @@
 import java.util.*
 
-var stockTransactions = mutableListOf<StockTransaction>()
 
 data class StockTransaction(val from: UUID, val to: UUID, val stock: Stock)
 data class Stock(val index: String, val amount: Long) {
@@ -9,9 +8,8 @@ data class Stock(val index: String, val amount: Long) {
     }
 }
 
-data class StockOrder(val op: Operation, val stock: Stock, val price: Double, val provider: UUID) {
+data class StockOrder(val op: Operation, val stock: Stock, val price: Double, val account: Account) {
     val pricePerStock get() = price / stock.amount
-    val account get() = Account(provider)
 
     enum class Operation {
         BUY, SELL
@@ -20,13 +18,12 @@ data class StockOrder(val op: Operation, val stock: Stock, val price: Double, va
     fun subtract(order: StockOrder): StockOrder {
         val amount = stock.amount - order.stock.amount
         val price = price - pricePerStock * order.stock.amount
-        return StockOrder(op, stock.copy(amount = amount), price, provider)
+        return StockOrder(op, stock.copy(amount = amount), price, account)
     }
 
     operator fun minus(other: StockOrder) = subtract(other)
 }
 
-val stockMarket = StockMarket()
 
 class StockMarket {
     val activeOrders = mutableListOf<StockOrder>()
@@ -40,16 +37,16 @@ class StockMarket {
             if (buyOrder.stock.amount > bestSellOrder.stock.amount) {
                 // Calculate the maximum to fulfill and push the rest to active orders.
                 val newBuyOrder = buyOrder - bestSellOrder
-                bestSellOrder.account.send(buyOrder.provider, buyOrder.stock)
-                buyOrder.account.send(bestSellOrder.provider, buyOrder.pricePerStock * bestSellOrder.stock.amount)
+                bestSellOrder.account.send(buyOrder.account.uuid, buyOrder.stock)
+                buyOrder.account.send(bestSellOrder.account.uuid, buyOrder.pricePerStock * bestSellOrder.stock.amount)
                 activeOrders.remove(buyOrder)
                 activeOrders.remove(bestSellOrder)
                 activeOrders.add(newBuyOrder)
             } else if (bestSellOrder.stock.amount >= buyOrder.stock.amount) {
                 // Calculate how much fullfilled and subtract from the sell order.
                 val newSellOrder = bestSellOrder - buyOrder
-                bestSellOrder.account.send(buyOrder.provider, buyOrder.stock)
-                buyOrder.account.send(bestSellOrder.provider, buyOrder.price)
+                bestSellOrder.account.send(buyOrder.account.uuid, buyOrder.stock)
+                buyOrder.account.send(bestSellOrder.account.uuid, buyOrder.price)
                 activeOrders.remove(buyOrder)
                 activeOrders.remove(bestSellOrder)
                 activeOrders.add(newSellOrder)
