@@ -1,3 +1,5 @@
+package com.kraskaska.economics.yuyahone
+
 import java.util.*
 
 class Economy {

@@ -1,3 +1,6 @@
+import com.kraskaska.economics.yuyahone.Account
+import com.kraskaska.economics.yuyahone.Economy
+import com.kraskaska.economics.yuyahone.Stock
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertDoesNotThrow
