@@ -1,5 +1,6 @@
 plugins {
     kotlin("jvm") version "1.8.0"
+    `maven-publish`
 }
 
 group = "com.kraskaska.economics"
@@ -19,4 +20,13 @@ tasks.test {
 
 kotlin {
     jvmToolchain(11)
+}
+
+// Local repo
+publishing {
+    publications {
+        create<MavenPublication>("yuyahone") {
+            from(components["java"])
+        }
+    }
 }

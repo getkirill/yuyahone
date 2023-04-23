@@ -1,6 +1,6 @@
 import java.util.*
 
-val stockTransactions = mutableListOf<StockTransaction>()
+var stockTransactions = mutableListOf<StockTransaction>()
 
 data class StockTransaction(val from: UUID, val to: UUID, val stock: Stock)
 data class Stock(val index: String, val amount: Long) {
